@@ -20,6 +20,7 @@ import org.apache.nifi.authorization.AuthorizeAccess;
 import org.apache.nifi.authorization.RequestAction;
 import org.apache.nifi.authorization.user.NiFiUser;
 import org.apache.nifi.controller.ScheduledState;
+import org.apache.nifi.controller.exception.CommunicationsException;
 import org.apache.nifi.controller.repository.claim.ContentDirection;
 import org.apache.nifi.controller.service.ControllerServiceState;
 import org.apache.nifi.groups.ProcessGroup;
@@ -1114,6 +1115,14 @@ public interface NiFiServiceFacade {
      * @return group
      */
     RemoteProcessGroupEntity getRemoteProcessGroup(String remoteProcessGroupId);
+
+    /**
+     * Refresh and Gets a remote process group.
+     *
+     * @param remoteProcessGroupId The id of the remote process group
+     * @return group
+     */
+    RemoteProcessGroupEntity refreshRemoteProcessGroup(String remoteProcessGroupId);
 
     /**
      * Gets all remote process groups in the a given parent group.

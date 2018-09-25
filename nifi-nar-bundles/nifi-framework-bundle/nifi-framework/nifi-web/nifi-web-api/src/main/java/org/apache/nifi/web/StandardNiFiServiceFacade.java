@@ -72,6 +72,7 @@ import org.apache.nifi.controller.ReportingTaskNode;
 import org.apache.nifi.controller.ScheduledState;
 import org.apache.nifi.controller.Snippet;
 import org.apache.nifi.controller.Template;
+import org.apache.nifi.controller.exception.CommunicationsException;
 import org.apache.nifi.controller.label.Label;
 import org.apache.nifi.controller.leader.election.LeaderElectionManager;
 import org.apache.nifi.controller.repository.claim.ContentDirection;
@@ -3491,6 +3492,17 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
     @Override
     public RemoteProcessGroupEntity getRemoteProcessGroup(final String remoteProcessGroupId) {
         final RemoteProcessGroup rpg = remoteProcessGroupDAO.getRemoteProcessGroup(remoteProcessGroupId);
+        return createRemoteGroupEntity(rpg, NiFiUserUtils.getNiFiUser());
+    }
+
+    @Override
+    public RemoteProcessGroupEntity refreshRemoteProcessGroup(final String remoteProcessGroupId) {
+        final RemoteProcessGroup rpg = remoteProcessGroupDAO.getRemoteProcessGroup(remoteProcessGroupId);
+        try {
+			rpg.refreshFlowContents(true);
+		} catch (CommunicationsException e) {
+			throw new ClusterRequestException(e.getMessage(),e);
+		}
         return createRemoteGroupEntity(rpg, NiFiUserUtils.getNiFiUser());
     }
 

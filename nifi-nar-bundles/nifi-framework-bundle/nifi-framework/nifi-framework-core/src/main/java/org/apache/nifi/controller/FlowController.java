@@ -4924,8 +4924,8 @@ public class FlowController implements EventAccess, ControllerServiceProvider, R
         final List<RemoteProcessGroup> remoteGroups = getGroup(getRootGroupId()).findAllRemoteProcessGroups();
         for (final RemoteProcessGroup remoteGroup : remoteGroups) {
             try {
-                remoteGroup.refreshFlowContents();
-            } catch (final CommunicationsException e) {
+                remoteGroup.refreshFlowContents(false);
+            } catch (final Exception e) {
                 LOG.warn("Unable to communicate with remote instance {} due to {}", remoteGroup, e.toString());
                 if (LOG.isDebugEnabled()) {
                     LOG.warn("", e);

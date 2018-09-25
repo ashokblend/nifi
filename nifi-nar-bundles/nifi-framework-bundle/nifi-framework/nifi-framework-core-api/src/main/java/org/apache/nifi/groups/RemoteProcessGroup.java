@@ -77,7 +77,7 @@ public interface RemoteProcessGroup extends ComponentAuthorizable, Positionable,
 
     RemoteProcessGroupCounts getCounts();
 
-    void refreshFlowContents() throws CommunicationsException;
+    void refreshFlowContents(boolean hardRefresh) throws CommunicationsException;
 
     Date getLastRefreshTime();
 

@@ -190,7 +190,7 @@ public class StandardRemoteProcessGroup implements RemoteProcessGroup {
         initialized = true;
         backgroundThreadExecutor.submit(() -> {
             try {
-                refreshFlowContents();
+                refreshFlowContents(false);
             } catch (final Exception e) {
                 logger.warn("Unable to communicate with remote instance {}", new Object[] {this, e});
             }
@@ -829,9 +829,8 @@ public class StandardRemoteProcessGroup implements RemoteProcessGroup {
             readLock.unlock();
         }
     }
-
-    @Override
-    public void refreshFlowContents() throws CommunicationsException {
+    
+    public void refreshFlowContents(boolean hardRefresh) throws CommunicationsException {
         if (!initialized) {
             return;
         }
@@ -839,7 +838,7 @@ public class StandardRemoteProcessGroup implements RemoteProcessGroup {
         try {
             // perform the request
             final ControllerDTO dto;
-            try (final SiteToSiteRestApiClient apiClient = getSiteToSiteRestApiClient()) {
+            try (final SiteToSiteRestApiClient apiClient = getSiteToSiteRestApiClient(hardRefresh)) {
                 dto = apiClient.getController(targetUris);
             } catch (IOException e) {
                 throw new CommunicationsException("Unable to communicate with Remote NiFi at URI " + targetUris + " due to: " + e.getMessage());
@@ -947,11 +946,12 @@ public class StandardRemoteProcessGroup implements RemoteProcessGroup {
         }
     }
 
-    private SiteToSiteRestApiClient getSiteToSiteRestApiClient() {
+    private SiteToSiteRestApiClient getSiteToSiteRestApiClient(boolean hardRefresh) {
         SiteToSiteRestApiClient apiClient = new SiteToSiteRestApiClient(sslContext, new HttpProxy(proxyHost, proxyPort, proxyUser, proxyPassword), getEventReporter());
         apiClient.setConnectTimeoutMillis(getCommunicationsTimeout(TimeUnit.MILLISECONDS));
         apiClient.setReadTimeoutMillis(getCommunicationsTimeout(TimeUnit.MILLISECONDS));
         apiClient.setLocalAddress(getLocalAddress());
+        apiClient.setHardRefresh(hardRefresh);
         apiClient.setCacheExpirationMillis(remoteContentsCacheExpiration);
         return apiClient;
     }
@@ -1125,7 +1125,7 @@ public class StandardRemoteProcessGroup implements RemoteProcessGroup {
             readLock.unlock();
         }
 
-        refreshFlowContents();
+        refreshFlowContents(false);
 
         readLock.lock();
         try {
@@ -1173,7 +1173,7 @@ public class StandardRemoteProcessGroup implements RemoteProcessGroup {
                 return;
             }
 
-            try (final SiteToSiteRestApiClient apiClient = getSiteToSiteRestApiClient()) {
+            try (final SiteToSiteRestApiClient apiClient = getSiteToSiteRestApiClient(false)) {
                 try {
                     final ControllerDTO dto = apiClient.getController(targetUris);
 

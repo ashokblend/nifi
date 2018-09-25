@@ -143,6 +143,56 @@ public class RemoteProcessGroupResource extends ApplicationResource {
     }
 
     /**
+     * Refresh and retrieve the specified remote process group.
+     *
+     * @param id The id of the remote process group to retrieve
+     * @return A remoteProcessGroupEntity.
+     */
+    @GET
+    @Consumes(MediaType.WILDCARD)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/refresh/{id}")
+    @ApiOperation(
+            value = "Refresh and Gets a remote process group",
+            response = RemoteProcessGroupEntity.class,
+            authorizations = {
+                    @Authorization(value = "Read - /remote-process-groups/refresh/{uuid}")
+            }
+    )
+    @ApiResponses(
+            value = {
+                    @ApiResponse(code = 400, message = "NiFi was unable to complete the request because it was invalid. The request should not be retried without modification."),
+                    @ApiResponse(code = 401, message = "Client could not be authenticated."),
+                    @ApiResponse(code = 403, message = "Client is not authorized to make this request."),
+                    @ApiResponse(code = 404, message = "The specified resource could not be found."),
+                    @ApiResponse(code = 409, message = "The request was valid but NiFi was not in the appropriate state to process it. Retrying the same request later may be successful.")
+            }
+    )
+    public Response refreshRemoteProcessGroup(
+            @ApiParam(
+                    value = "The remote process group id.",
+                    required = true
+            )
+            @PathParam("id") final String id) {
+
+        if (isReplicateRequest()) {
+            return replicate(HttpMethod.GET);
+        }
+
+        // authorize access
+        serviceFacade.authorizeAccess(lookup -> {
+            final Authorizable remoteProcessGroup = lookup.getRemoteProcessGroup(id);
+            remoteProcessGroup.authorize(authorizer, RequestAction.READ, NiFiUserUtils.getNiFiUser());
+        });
+
+        //refresh and get the remote process group
+        final RemoteProcessGroupEntity entity = serviceFacade.refreshRemoteProcessGroup(id);
+        populateRemainingRemoteProcessGroupEntityContent(entity);
+
+        return generateOkResponse(entity).build();
+    }
+ 
+    /**
      * Removes the specified remote process group.
      *
      * @param httpServletRequest request

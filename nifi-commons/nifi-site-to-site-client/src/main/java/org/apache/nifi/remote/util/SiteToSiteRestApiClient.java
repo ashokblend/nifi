@@ -189,6 +189,11 @@ public class SiteToSiteRestApiClient implements Closeable {
     private static final ConcurrentMap<String, RemoteGroupContents> contentsMap = new ConcurrentHashMap<>();
     private volatile long lastPruneTimestamp = System.currentTimeMillis();
 
+    /**
+     * it makes call to remote cluster even though old result is available in cache
+     */
+    private boolean hardRefresh;
+
     public SiteToSiteRestApiClient(final SSLContext sslContext, final HttpProxy proxy, final EventReporter eventReporter) {
         this.sslContext = sslContext;
         this.proxy = proxy;
@@ -207,7 +212,15 @@ public class SiteToSiteRestApiClient implements Closeable {
         });
     }
 
-    @Override
+    public boolean isHardRefresh() {
+		return hardRefresh;
+	}
+
+	public void setHardRefresh(boolean hardRefresh) {
+		this.hardRefresh = hardRefresh;
+	}
+
+	@Override
     public void close() throws IOException {
         stopExtendingTtl();
         closeSilently(httpClient);
@@ -386,7 +399,7 @@ public class SiteToSiteRestApiClient implements Closeable {
         synchronized (internedUrl) {
             final RemoteGroupContents groupContents = contentsMap.get(internedUrl);
 
-            if (groupContents == null || groupContents.getContents() == null || groupContents.isOlderThan(cacheExpirationMillis)) {
+            if (hardRefresh || groupContents == null || groupContents.getContents() == null || groupContents.isOlderThan(cacheExpirationMillis)) {
                 logger.debug("No Contents for remote group at URL {} or contents have expired; will refresh contents", internedUrl);
 
                 final ControllerDTO refreshedContents;
